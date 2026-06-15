@@ -390,6 +390,16 @@ export default async function HomePage() {
             </a>
           </div>
 
+          <div className="mb-8 border-t border-zinc-800" />
+
+          <nav aria-label="Enlaces rápidos verticales" className="mb-8 flex flex-col items-center gap-2">
+            {([['#inicio', 'Inicio'], ['#servicios', 'Servicios'], ['#galeria', 'Galería'], ['#fidelizacion', 'Promos'], ['#ubicacion', 'Ubicación']] as [string, string][]).map(([href, label]) => (
+              <a key={href} href={href} className="text-sm text-zinc-500 transition-colors hover:text-zinc-300">
+                {label}
+              </a>
+            ))}
+          </nav>
+
           <div className="mb-6 border-t border-zinc-800" />
 
           <div className="space-y-1 text-center text-xs text-zinc-600">
