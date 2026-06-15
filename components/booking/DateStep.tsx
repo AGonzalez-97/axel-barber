@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 type TenantConfig = {
@@ -13,10 +13,21 @@ type SlotStatus = {
   available: boolean
 }
 
-/**
- * Returns true if the given Date falls on an enabled day per the bitmask.
- * Bitmask: bit 1 = Monday, ..., bit 6 = Saturday, bit 7 = Sunday
- */
+type CalendarDay = {
+  date: Date
+  dateStr: string   // YYYY-MM-DD
+  dayNum: number    // 1–31
+  dayName: string   // "lun", "mar", …
+  enabled: boolean
+  isToday: boolean
+}
+
+const DAY_NAMES = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb']
+const MONTH_NAMES = [
+  'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+  'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+]
+
 function isDayEnabled(date: Date, bitmask: number): boolean {
   const jsDay = date.getDay()
   const bitPos = jsDay === 0 ? 7 : jsDay
@@ -30,22 +41,47 @@ function toLocalDateString(date: Date): string {
   return `${y}-${m}-${d}`
 }
 
+function buildCalendarDays(bitmask: number, weeksAhead = 6): CalendarDay[] {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const todayStr = toLocalDateString(today)
+
+  const days: CalendarDay[] = []
+  const cursor = new Date(today)
+
+  // Start from the Monday of the current week
+  const dow = cursor.getDay()
+  const offsetToMon = dow === 0 ? -6 : 1 - dow
+  cursor.setDate(cursor.getDate() + offsetToMon)
+
+  const totalDays = weeksAhead * 7
+
+  for (let i = 0; i < totalDays; i++) {
+    const d = new Date(cursor)
+    const dateStr = toLocalDateString(d)
+    const isPast = d < today && dateStr !== todayStr
+    days.push({
+      date: d,
+      dateStr,
+      dayNum: d.getDate(),
+      dayName: DAY_NAMES[d.getDay()],
+      enabled: !isPast && isDayEnabled(d, bitmask),
+      isToday: dateStr === todayStr,
+    })
+    cursor.setDate(cursor.getDate() + 1)
+  }
+
+  return days
+}
+
 type DateStepProps = {
   serviceId: string
 }
 
-/**
- * Step 2: Date picker → visual availability grid → time selection.
- *
- * After the client picks a date, a full slot grid is shown for the day.
- * Available slots are clickable; taken slots are grayed out so the client
- * knows at a glance what's still free before choosing.
- *
- * In "request" mode: selecting a slot submits a booking request (Leo confirms).
- * In "slots" mode: only available slots are shown as selectable.
- */
 export function DateStep({ serviceId }: DateStepProps) {
   const router = useRouter()
+  const selectedRef = useRef<HTMLButtonElement | null>(null)
+
   const [tenantConfig, setTenantConfig] = useState<TenantConfig | null>(null)
   const [configError, setConfigError] = useState<string | null>(null)
 
@@ -56,7 +92,6 @@ export function DateStep({ serviceId }: DateStepProps) {
   const [slotsLoading, setSlotsLoading] = useState(false)
   const [slotsError, setSlotsError] = useState<string | null>(null)
 
-  // Fetch tenant config on mount
   useEffect(() => {
     fetch('/api/tenant')
       .then((r) => r.json())
@@ -67,7 +102,6 @@ export function DateStep({ serviceId }: DateStepProps) {
       .catch(() => setConfigError('No se pudo cargar la configuración. Intentá de nuevo.'))
   }, [])
 
-  // Fetch availability when date changes
   useEffect(() => {
     if (!selectedDate) return
     setSlotsLoading(true)
@@ -85,27 +119,17 @@ export function DateStep({ serviceId }: DateStepProps) {
       .finally(() => setSlotsLoading(false))
   }, [selectedDate])
 
+  // Scroll selected day into view
+  useEffect(() => {
+    selectedRef.current?.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' })
+  }, [selectedDate])
+
   function handleContinue() {
     if (!selectedDate || !selectedTime) return
     router.push(
       `/book?step=client&service=${serviceId}&date=${selectedDate}&time=${encodeURIComponent(selectedTime)}`,
     )
   }
-
-  const today = new Date()
-  const minDate = toLocalDateString(today)
-  const maxDateObj = new Date(today)
-  maxDateObj.setDate(maxDateObj.getDate() + 60)
-  const maxDate = toLocalDateString(maxDateObj)
-
-  function isDateDisabled(dateStr: string): boolean {
-    if (!tenantConfig) return true
-    const [y, m, d] = dateStr.split('-').map(Number)
-    const dt = new Date(y, m - 1, d)
-    return !isDayEnabled(dt, tenantConfig.available_days)
-  }
-
-  const availableCount = slots.filter((s) => s.available).length
 
   if (configError) {
     return (
@@ -120,12 +144,28 @@ export function DateStep({ serviceId }: DateStepProps) {
       <div className="mx-auto max-w-lg px-4 py-8">
         <div className="space-y-4" role="status" aria-label="Cargando">
           <div className="h-8 w-40 animate-pulse rounded bg-gray-200" />
-          <div className="h-12 animate-pulse rounded-xl bg-gray-200" />
+          <div className="h-32 animate-pulse rounded-xl bg-gray-200" />
         </div>
       </div>
     )
   }
 
+  const calDays = buildCalendarDays(tenantConfig.available_days, 6)
+  const weeks: CalendarDay[][] = []
+  for (let i = 0; i < calDays.length; i += 7) {
+    weeks.push(calDays.slice(i, i + 7))
+  }
+
+  // Month label for display
+  const displayDate = selectedDate
+    ? (() => {
+        const [y, m, d] = selectedDate.split('-').map(Number)
+        const dt = new Date(y, m - 1, d)
+        return `${DAY_NAMES[dt.getDay()]} ${d} de ${MONTH_NAMES[m - 1]}`
+      })()
+    : null
+
+  const availableCount = slots.filter((s) => s.available).length
   const canContinue = !!selectedDate && !!selectedTime
 
   return (
@@ -138,7 +178,7 @@ export function DateStep({ serviceId }: DateStepProps) {
         ← Volver
       </button>
 
-      <header className="mb-8">
+      <header className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Elegí fecha y hora</h1>
         <p className="mt-1 text-gray-500">
           {tenantConfig.booking_mode === 'slots'
@@ -147,88 +187,99 @@ export function DateStep({ serviceId }: DateStepProps) {
         </p>
       </header>
 
-      {/* Date picker */}
+      {/* ── Calendar ─────────────────────────────────────────────────────── */}
       <section className="mb-6">
-        <label htmlFor="booking-date" className="mb-2 block text-sm font-medium text-gray-700">
-          Fecha
-        </label>
-        <input
-          id="booking-date"
-          type="date"
-          min={minDate}
-          max={maxDate}
-          value={selectedDate}
-          onChange={(e) => {
-            const val = e.target.value
-            if (val && isDateDisabled(val)) return
-            setSelectedDate(val)
-          }}
-          className="h-12 w-full rounded-xl border border-gray-200 bg-white px-4 text-gray-900 shadow-sm focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900"
-        />
-        <p className="mt-1 text-xs text-gray-400">Días disponibles: lunes a sábado</p>
+        {/* Day-of-week header */}
+        <div className="mb-1 grid grid-cols-7 text-center">
+          {DAY_NAMES.map((d) => (
+            <span key={d} className="text-[11px] font-medium uppercase tracking-wide text-gray-400">
+              {d}
+            </span>
+          ))}
+        </div>
+
+        {/* Week rows */}
+        <div className="space-y-1">
+          {weeks.map((week, wi) => {
+            // Show month label at start of a new month within a week
+            const firstEnabled = week.find((d) => d.date.getDate() === 1)
+            return (
+              <div key={wi}>
+                {firstEnabled && (
+                  <p className="mb-1 mt-2 text-xs font-semibold capitalize text-gray-500">
+                    {MONTH_NAMES[firstEnabled.date.getMonth()]}
+                  </p>
+                )}
+                <div className="grid grid-cols-7 gap-1">
+                  {week.map((day) => {
+                    const isSelected = selectedDate === day.dateStr
+                    return (
+                      <button
+                        key={day.dateStr}
+                        ref={isSelected ? selectedRef : null}
+                        onClick={() => day.enabled && setSelectedDate(day.dateStr)}
+                        disabled={!day.enabled}
+                        aria-pressed={isSelected}
+                        aria-label={`${day.dayName} ${day.dayNum}`}
+                        className={[
+                          'flex h-10 w-full flex-col items-center justify-center rounded-xl text-sm font-medium transition-colors',
+                          isSelected
+                            ? 'bg-gray-900 text-white'
+                            : day.isToday && day.enabled
+                            ? 'ring-2 ring-gray-900 bg-white text-gray-900 hover:bg-gray-50'
+                            : day.enabled
+                            ? 'bg-white text-gray-900 hover:bg-gray-100 active:bg-gray-200'
+                            : 'cursor-not-allowed bg-transparent text-gray-200',
+                        ].join(' ')}
+                      >
+                        <span className="leading-none">{day.dayNum}</span>
+                        {day.isToday && !isSelected && (
+                          <span className="mt-0.5 h-1 w-1 rounded-full bg-gray-900" />
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })}
+        </div>
       </section>
 
-      {/* Availability grid */}
+      {/* ── Slot grid ────────────────────────────────────────────────────── */}
       {selectedDate && (
         <section className="mb-8">
+          <div className="mb-3 flex items-center justify-between">
+            <p className="text-sm font-semibold capitalize text-gray-900">
+              {displayDate}
+            </p>
+            {!slotsLoading && !slotsError && (
+              <p className="text-xs text-gray-400">
+                {availableCount === 0
+                  ? 'Sin turnos disponibles'
+                  : `${availableCount} disponible${availableCount !== 1 ? 's' : ''}`}
+              </p>
+            )}
+          </div>
+
           {slotsLoading && (
-            <div className="grid grid-cols-4 gap-2" role="status" aria-label="Cargando disponibilidad">
-              {Array.from({ length: 12 }).map((_, i) => (
+            <div className="grid grid-cols-4 gap-2" role="status">
+              {Array.from({ length: 8 }).map((_, i) => (
                 <div key={i} className="h-14 animate-pulse rounded-xl bg-gray-200" />
               ))}
             </div>
           )}
 
           {slotsError && (
-            <p className="rounded-xl bg-red-50 p-3 text-center text-sm text-red-600">
-              {slotsError}
-            </p>
+            <p className="rounded-xl bg-red-50 p-3 text-center text-sm text-red-600">{slotsError}</p>
           )}
 
           {!slotsLoading && !slotsError && slots.length > 0 && (
             <>
-              {/* Summary */}
-              <div className="mb-3 flex items-center justify-between">
-                <p className="text-sm font-medium text-gray-700">Horarios</p>
-                <p className="text-xs text-gray-400">
-                  {availableCount === 0
-                    ? 'Sin turnos disponibles'
-                    : `${availableCount} disponible${availableCount !== 1 ? 's' : ''}`}
-                </p>
-              </div>
-
-              {/* Legend */}
-              <div className="mb-3 flex items-center gap-4 text-xs text-gray-500">
-                <span className="flex items-center gap-1">
-                  <span className="inline-block h-3 w-3 rounded-full bg-gray-900" />
-                  Disponible
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="inline-block h-3 w-3 rounded-full bg-gray-200" />
-                  Ocupado
-                </span>
-                {selectedTime && (
-                  <span className="flex items-center gap-1">
-                    <span className="inline-block h-3 w-3 rounded-full bg-blue-600" />
-                    Tu elección
-                  </span>
-                )}
-              </div>
-
-              {/* Slot grid */}
-              <div
-                className="grid grid-cols-4 gap-2"
-                role="group"
-                aria-label="Disponibilidad de turnos"
-              >
+              <div className="grid grid-cols-4 gap-2" role="group" aria-label="Horarios">
                 {slots.map((slot) => {
                   const isSelected = selectedTime === slot.time
-                  const isAvailable = slot.available
-
-                  // In slots mode: taken slots are completely blocked.
-                  // In request mode: taken slots are shown but still selectable (Leo confirms).
-                  const isDisabled =
-                    tenantConfig.booking_mode === 'slots' && !isAvailable
+                  const isDisabled = tenantConfig.booking_mode === 'slots' && !slot.available
 
                   return (
                     <button
@@ -236,38 +287,36 @@ export function DateStep({ serviceId }: DateStepProps) {
                       onClick={() => !isDisabled && setSelectedTime(slot.time)}
                       disabled={isDisabled}
                       aria-pressed={isSelected}
-                      aria-label={`${slot.time} — ${isAvailable ? 'disponible' : 'ocupado'}`}
                       className={[
                         'flex h-14 flex-col items-center justify-center rounded-xl border text-sm font-medium transition-colors',
                         isSelected
                           ? 'border-blue-600 bg-blue-600 text-white'
                           : isDisabled
                           ? 'cursor-not-allowed border-gray-100 bg-gray-50 text-gray-300'
-                          : isAvailable
-                          ? 'border-gray-200 bg-white text-gray-900 hover:border-gray-900 hover:bg-gray-50 active:bg-gray-100'
-                          : 'border-gray-100 bg-gray-50 text-gray-400 hover:border-gray-300',
+                          : slot.available
+                          ? 'border-gray-200 bg-white text-gray-900 hover:border-gray-900 active:bg-gray-100'
+                          : 'border-gray-100 bg-gray-50 text-gray-400',
                       ].join(' ')}
                     >
                       <span>{slot.time}</span>
-                      {!isAvailable && (
-                        <span className="mt-0.5 text-[10px] font-normal leading-none">
-                          Ocupado
-                        </span>
+                      {!slot.available && (
+                        <span className="mt-0.5 text-[10px] font-normal leading-none">Ocupado</span>
                       )}
                     </button>
                   )
                 })}
               </div>
 
-              {/* Request mode note when user picks a taken slot */}
-              {tenantConfig.booking_mode === 'request' && selectedTime && !slots.find(s => s.time === selectedTime)?.available && (
-                <p className="mt-3 rounded-xl bg-yellow-50 px-3 py-2 text-xs text-yellow-700">
-                  Ese horario ya tiene un turno, pero podés pedirlo igual. Leo va a confirmar si hay lugar.
-                </p>
-              )}
+              {tenantConfig.booking_mode === 'request' &&
+                selectedTime &&
+                !slots.find((s) => s.time === selectedTime)?.available && (
+                  <p className="mt-3 rounded-xl bg-yellow-50 px-3 py-2 text-xs text-yellow-700">
+                    Ese horario ya tiene un turno, pero podés pedirlo igual. Leo va a confirmar si hay lugar.
+                  </p>
+                )}
 
               {availableCount === 0 && tenantConfig.booking_mode === 'slots' && (
-                <p className="mt-3 rounded-xl bg-yellow-50 p-4 text-center text-sm text-yellow-700">
+                <p className="mt-2 rounded-xl bg-yellow-50 p-4 text-center text-sm text-yellow-700">
                   No hay turnos disponibles para este día. Probá con otra fecha.
                 </p>
               )}
