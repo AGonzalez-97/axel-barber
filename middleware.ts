@@ -1,27 +1,67 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 
-// Paths that require an authenticated session.
+// Paths that require an authenticated session — both UI pages and API routes.
 const PROTECTED_PREFIXES = [
   '/dashboard',
-  '/appointments',
-  '/clients',
-  '/settings',
+  '/turnos',
+  '/clientes',
+  '/ajustes',
   '/qr',
+  '/api/admin',
 ]
 
 function isProtected(pathname: string): boolean {
   return PROTECTED_PREFIXES.some((prefix) => pathname.startsWith(prefix))
 }
 
+// ── Simple in-memory rate limiter ─────────────────────────────────────────────
+// Works per-instance. For multi-instance production use @upstash/ratelimit + Redis.
+const rateLimitStore = new Map<string, { count: number; resetAt: number }>()
+
+const RATE_LIMIT_ROUTES: Record<string, { max: number; windowMs: number }> = {
+  '/api/bookings': { max: 5, windowMs: 60_000 },
+}
+
+function checkRateLimit(ip: string, max: number, windowMs: number): boolean {
+  const now = Date.now()
+  const entry = rateLimitStore.get(ip)
+
+  if (!entry || now > entry.resetAt) {
+    rateLimitStore.set(ip, { count: 1, resetAt: now + windowMs })
+    return true
+  }
+
+  if (entry.count >= max) return false
+  entry.count++
+  return true
+}
+
 export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
+
+  // Rate limit POST requests to sensitive public endpoints
+  const rateConfig = RATE_LIMIT_ROUTES[pathname]
+  if (rateConfig && request.method === 'POST') {
+    const ip =
+      request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+      request.headers.get('x-real-ip') ??
+      'unknown'
+
+    if (!checkRateLimit(ip, rateConfig.max, rateConfig.windowMs)) {
+      return NextResponse.json(
+        { error: 'Demasiadas solicitudes. Intentá de nuevo en un minuto.' },
+        { status: 429 },
+      )
+    }
+  }
+
   const { supabaseResponse, user } = await updateSession(request)
 
-  if (!user && isProtected(request.nextUrl.pathname)) {
+  if (!user && isProtected(pathname)) {
     const loginUrl = request.nextUrl.clone()
     loginUrl.pathname = '/login'
-    // Preserve the intended destination so we can redirect back after login.
-    loginUrl.searchParams.set('next', request.nextUrl.pathname)
+    loginUrl.searchParams.set('next', pathname)
     return NextResponse.redirect(loginUrl)
   }
 

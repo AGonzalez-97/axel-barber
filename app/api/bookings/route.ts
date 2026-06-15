@@ -175,9 +175,9 @@ export async function POST(request: NextRequest) {
         break
       }
     }
-    // Count 'cut' events after the last reset (or from beginning)
+    // Count cut_completed events after the last reset (or from beginning)
     for (let i = afterReset === ledgerData.length ? 0 : afterReset; i < ledgerData.length; i++) {
-      if (ledgerData[i].event === 'cut') count++
+      if (ledgerData[i].event === 'cut_completed') count++
     }
     cycleCount = count
   }
