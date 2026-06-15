@@ -67,7 +67,7 @@ function buildWhatsAppConfirmationUrl(phone: string, clientName: string, startsA
     hour12: false,
   })
   const firstName = clientName.split(' ')[0]
-  const message = `¡Hola ${firstName}! 👋 Tu turno está confirmado para el ${date} a las ${time} hs. ¡Te esperamos! ✂️ — Axel Barber Club`
+  const message = `Hola ${firstName}! Tu turno esta confirmado para el ${date} a las ${time} hs. Te esperamos! - Axel Barber Club`
   return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`
 }
 
