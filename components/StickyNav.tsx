@@ -24,12 +24,17 @@ export function StickyNav() {
     return () => window.removeEventListener('scroll', handler)
   }, [])
 
-  // Close menu on scroll
+  // Close menu on scroll (with small delay so anchor navigation doesn't immediately close it)
   useEffect(() => {
-    if (menuOpen) {
-      const close = () => setMenuOpen(false)
+    if (!menuOpen) return
+    let timeout: ReturnType<typeof setTimeout>
+    const close = () => setMenuOpen(false)
+    timeout = setTimeout(() => {
       window.addEventListener('scroll', close, { once: true, passive: true })
-      return () => window.removeEventListener('scroll', close)
+    }, 400)
+    return () => {
+      clearTimeout(timeout)
+      window.removeEventListener('scroll', close)
     }
   }, [menuOpen])
 
