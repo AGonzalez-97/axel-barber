@@ -2,8 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { getLoyaltyStatusLabel } from '@/lib/loyalty'
-import type { LoyaltyConfig } from '@/lib/loyalty'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -20,7 +18,6 @@ type BookingStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'no_s
 interface BookingActionsProps {
   bookingId: string
   status: BookingStatus
-  loyaltyConfig: LoyaltyConfig
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -54,7 +51,6 @@ function formatARS(value: number): string {
 export default function BookingActions({
   bookingId,
   status,
-  loyaltyConfig,
 }: BookingActionsProps) {
   const router = useRouter()
 
@@ -143,14 +139,8 @@ export default function BookingActions({
 
   // ── Render: completed state (post-cut result) ─────────────────────────────
   if (completeResult) {
-    const newLoyaltyLabel = getLoyaltyStatusLabel(
-      completeResult.new_cycle_count,
-      loyaltyConfig,
-    )
-
     return (
       <div className="space-y-4">
-        {/* Success banner */}
         <div className="rounded-2xl bg-gray-900 p-5 text-white">
           {completeResult.is_free ? (
             <p className="text-2xl font-bold">¡Corte gratis! 🎉</p>
@@ -163,9 +153,7 @@ export default function BookingActions({
               Corte registrado — {formatARS(completeResult.price_charged)}
             </p>
           )}
-          <p className="mt-2 text-sm text-gray-300">{newLoyaltyLabel}</p>
         </div>
-
       </div>
     )
   }

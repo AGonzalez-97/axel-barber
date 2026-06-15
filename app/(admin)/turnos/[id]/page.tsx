@@ -333,7 +333,7 @@ export default async function BookingDetailPage({
       </div>
 
       {/* ── WhatsApp confirmation ───────────────────────────────────────── */}
-      {booking.clients && (
+      {booking.clients && booking.status !== 'completed' && (
         <a
           href={buildWhatsAppConfirmationUrl(booking.clients.phone, booking.clients.name, booking.starts_at)}
           target="_blank"
@@ -351,7 +351,6 @@ export default async function BookingDetailPage({
       <BookingActions
         bookingId={booking.id}
         status={booking.status}
-        loyaltyConfig={loyaltyConfig}
       />
     </div>
   )
