@@ -11,26 +11,9 @@ type Service = {
 }
 
 function formatARS(amount: number): string {
-  return new Intl.NumberFormat('es-AR', {
-    style: 'currency',
-    currency: 'ARS',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount)
+  return '$' + Math.round(amount).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')
 }
 
-function formatDuration(minutes: number): string {
-  if (minutes < 60) return `${minutes} min`
-  const h = Math.floor(minutes / 60)
-  const m = minutes % 60
-  return m > 0 ? `${h}h ${m}min` : `${h}h`
-}
-
-/**
- * Step 1: Service selection.
- * Fetches active services and lets the user pick one.
- * On selection → navigates to /book?step=date&service=<id>
- */
 export function ServiceStep() {
   const router = useRouter()
   const [services, setServices] = useState<Service[]>([])
@@ -53,53 +36,58 @@ export function ServiceStep() {
   }
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-8">
-      <header className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Reservar turno</h1>
-        <p className="mt-1 text-gray-500">Elegí el servicio que querés</p>
-      </header>
-
-      {loading && (
-        <div className="space-y-4" role="status" aria-label="Cargando servicios">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-24 animate-pulse rounded-xl bg-gray-200" />
-          ))}
+    <div className="min-h-screen bg-zinc-950 px-4 py-10">
+      <div className="mx-auto max-w-lg">
+        {/* Header */}
+        <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-amber-400/20 bg-amber-400/10 px-3 py-1">
+          <span className="h-1.5 w-1.5 rounded-full bg-amber-400" aria-hidden="true" />
+          <span className="text-xs font-semibold uppercase tracking-widest text-amber-300">Reserva online</span>
         </div>
-      )}
+        <h1 className="mt-4 text-3xl font-black text-white">Elegí tu servicio</h1>
+        <p className="mt-1 text-zinc-400">Seleccioná lo que querés y elegimos el horario</p>
 
-      {error && (
-        <p className="rounded-xl bg-red-50 p-4 text-center text-red-600">{error}</p>
-      )}
+        <div className="mt-8">
+          {loading && (
+            <div className="space-y-3" role="status" aria-label="Cargando servicios">
+              {[1, 2].map((i) => (
+                <div key={i} className="h-20 animate-pulse rounded-2xl bg-zinc-800" />
+              ))}
+            </div>
+          )}
 
-      {!loading && !error && services.length === 0 && (
-        <p className="rounded-xl bg-yellow-50 p-4 text-center text-yellow-700">
-          No hay servicios disponibles por el momento.
-        </p>
-      )}
+          {error && (
+            <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-center text-sm text-red-400">
+              {error}
+            </div>
+          )}
 
-      {!loading && !error && services.length > 0 && (
-        <ul className="space-y-3">
-          {services.map((service) => (
-            <li key={service.id}>
-              <button
-                onClick={() => handleSelect(service.id)}
-                className="flex w-full items-center justify-between rounded-xl border border-gray-200 bg-white p-5 text-left shadow-sm transition-colors hover:border-gray-900 hover:bg-gray-50 active:bg-gray-100"
-                style={{ minHeight: '72px' }}
-              >
-                <div>
-                  <span className="block text-lg font-semibold text-gray-900">{service.name}</span>
-                  <span className="mt-0.5 block text-sm text-gray-500">
-                    {formatDuration(service.duration_minutes)}
-                  </span>
-                </div>
-                <span className="ml-4 shrink-0 text-lg font-bold text-gray-900">
-                  {formatARS(service.price_ars)}
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+          {!loading && !error && services.length === 0 && (
+            <div className="rounded-2xl border border-zinc-700 bg-zinc-900 p-6 text-center text-sm text-zinc-400">
+              No hay servicios disponibles por el momento.
+            </div>
+          )}
+
+          {!loading && !error && services.length > 0 && (
+            <ul className="space-y-3">
+              {services.map((service) => (
+                <li key={service.id}>
+                  <button
+                    onClick={() => handleSelect(service.id)}
+                    className="group flex w-full items-center justify-between rounded-2xl border border-zinc-800 bg-zinc-900 px-5 py-5 text-left transition-all hover:border-amber-400/40 hover:bg-zinc-800 active:scale-[0.98]"
+                  >
+                    <span className="text-lg font-bold text-white group-hover:text-amber-400 transition-colors">
+                      {service.name}
+                    </span>
+                    <span className="ml-4 shrink-0 rounded-xl bg-amber-400/10 px-4 py-1.5 text-base font-black text-amber-400">
+                      {formatARS(service.price_ars)}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

@@ -13,6 +13,7 @@ type BookingRequestBody = {
   time: string
   name: string
   phone: string
+  notes?: string
 }
 
 /**
@@ -34,7 +35,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
   }
 
-  const { service_id, date, name, phone, time } = body
+  const { service_id, date, name, phone, time, notes } = body
 
   // --- Input validation ---
 
@@ -126,6 +127,7 @@ export async function POST(request: NextRequest) {
       starts_at,
       ends_at,
       status: bookingStatus,
+      notes: notes?.trim().slice(0, 300) || null,
     })
     .select('id, status, starts_at')
     .single()
