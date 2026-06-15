@@ -259,7 +259,7 @@ export default async function HomePage() {
           {/* Map */}
           <div className="mb-4 overflow-hidden rounded-2xl ring-1 ring-white/10">
             <iframe
-              src="https://maps.google.com/maps?q=9+de+Julio+450,+Tafi+Viejo,+Tucuman,+Argentina&output=embed&z=16"
+              src="https://maps.google.com/maps?q=9+de+Julio+550,+Tafi+Viejo,+Tucuman,+Argentina&output=embed&z=16"
               width="100%"
               height="280"
               style={{ border: 0 }}
@@ -278,7 +278,7 @@ export default async function HomePage() {
                 </svg>
               </div>
               <h3 className="mb-2 font-bold text-white">Dirección</h3>
-              <p className="text-sm font-medium text-zinc-300">9 de Julio 450</p>
+              <p className="text-sm font-medium text-zinc-300">9 de Julio 550</p>
               <p className="text-sm text-zinc-500">Tafi Viejo, Tucumán</p>
             </div>
 
