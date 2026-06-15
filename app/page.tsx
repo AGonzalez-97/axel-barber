@@ -306,6 +306,20 @@ export default async function HomePage() {
           </p>
           <h2 className="mb-12 text-center text-4xl font-black text-zinc-900">Dónde nos encontramos</h2>
 
+          {/* Map */}
+          <div className="mb-4 overflow-hidden rounded-2xl shadow-sm ring-1 ring-zinc-200">
+            <iframe
+              src="https://maps.google.com/maps?q=9+de+Julio+450,+Tafi+Viejo,+Tucuman,+Argentina&output=embed&z=16"
+              width="100%"
+              height="280"
+              style={{ border: 0 }}
+              allowFullScreen
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              title="Ubicación de Axel Barber Club"
+            />
+          </div>
+
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-zinc-200">
               <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-100">
