@@ -22,6 +22,9 @@ interface CutHistoryRow {
   price_charged: number
   loyalty_discount_applied: boolean
   created_at: string
+  bookings: {
+    starts_at: string
+  } | null
   services: {
     name: string
     price_ars: number
@@ -69,6 +72,18 @@ function formatDateSpanish(iso: string): string {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
+  })
+}
+
+/**
+ * Formats an ISO timestamp to "HH:MM" in Argentina time.
+ */
+function formatTime(iso: string): string {
+  return new Date(iso).toLocaleTimeString('es-AR', {
+    timeZone: 'America/Argentina/Buenos_Aires',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
   })
 }
 
@@ -161,6 +176,7 @@ async function fetchCutHistory(clientId: string): Promise<CutHistoryRow[]> {
       price_charged,
       loyalty_discount_applied,
       created_at,
+      bookings ( starts_at ),
       services ( name, price_ars )
     `,
     )
@@ -352,14 +368,19 @@ export default async function ClientProfilePage({
                     !isLast ? 'border-b border-gray-100' : '',
                   ].join(' ')}
                 >
-                  {/* Date + service */}
+                  {/* Date + service + times */}
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-gray-900">
                       {cut.services?.name ?? 'Corte'}
                     </p>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-gray-500">
                       {formatDateSpanish(cut.created_at)}
                     </p>
+                    {cut.bookings?.starts_at && (
+                      <p className="mt-0.5 text-xs text-gray-400">
+                        Turno: {formatTime(cut.bookings.starts_at)} · Realizado: {formatTime(cut.created_at)}
+                      </p>
+                    )}
                   </div>
 
                   {/* Price + badges */}

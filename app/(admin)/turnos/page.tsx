@@ -145,6 +145,26 @@ function getConflictingIds(bookings: BookingRow[]): Set<string> {
 
 // ─── Data fetching ────────────────────────────────────────────────────────────
 
+async function fetchPendingBookings(): Promise<BookingRow[]> {
+  const service = createServiceClient()
+
+  const { data, error } = await service
+    .from('bookings')
+    .select('id, starts_at, created_at, status, clients ( name, phone ), services ( name )')
+    .eq('tenant_id', TENANT_ID)
+    .eq('status', 'pending')
+    .order('starts_at', { ascending: true })
+    .order('created_at', { ascending: true })
+    .returns<BookingRow[]>()
+
+  if (error) {
+    console.error('[TurnosPage] fetchPendingBookings error:', error)
+    return []
+  }
+
+  return data ?? []
+}
+
 async function fetchBookings(date: string): Promise<BookingRow[]> {
   const service = createServiceClient()
 
@@ -189,7 +209,10 @@ export default async function TurnosPage({
       ? searchParams.date
       : today
 
-  const bookings = await fetchBookings(targetDate)
+  const [bookings, pendingBookings] = await Promise.all([
+    fetchBookings(targetDate),
+    fetchPendingBookings(),
+  ])
   const conflictingIds = getConflictingIds(bookings)
 
   const prevDate = shiftDate(targetDate, -1)
@@ -198,6 +221,39 @@ export default async function TurnosPage({
 
   return (
     <div className="mx-auto max-w-lg px-4 py-6">
+
+      {/* ── Pending section ─────────────────────────────────────────────── */}
+      {pendingBookings.length > 0 && (
+        <div className="mb-6">
+          <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-orange-600">
+            Requieren confirmación ({pendingBookings.length})
+          </h2>
+          <ul className="space-y-2">
+            {pendingBookings.map((booking) => (
+              <li key={booking.id}>
+                <Link
+                  href={`/turnos/${booking.id}`}
+                  className="flex items-center gap-3 rounded-2xl bg-orange-50 px-4 py-3 ring-1 ring-orange-200 transition-shadow hover:shadow-md active:shadow-sm"
+                >
+                  <span className="min-w-[46px] rounded-lg bg-orange-500 px-2 py-1 text-center text-sm font-bold tabular-nums text-white">
+                    {formatTime(booking.starts_at)}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-gray-900">
+                      {booking.clients?.name ?? 'Cliente desconocido'}
+                    </p>
+                    <p className="truncate text-xs text-gray-500">
+                      {formatDateLabel(booking.starts_at.slice(0, 10))} · {booking.services?.name ?? '—'}
+                    </p>
+                  </div>
+                  <span className="text-xs text-orange-500">›</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* ── Header ──────────────────────────────────────────────────────── */}
       <div className="mb-6">
         <h1 className="text-xl font-bold text-gray-900">Turnos</h1>
