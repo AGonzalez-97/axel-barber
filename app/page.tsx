@@ -225,7 +225,7 @@ export default async function HomePage() {
       <section id="fidelizacion" className="bg-zinc-950 px-6 py-20">
         <div className="mx-auto max-w-lg">
           <p className="mb-2 text-center text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
-            Fidelización
+            Promociones
           </p>
           <h2 className="mb-2 text-center text-4xl font-black text-white">Programa de Clientes Frecuentes</h2>
           <p className="mb-3 text-center text-sm text-zinc-400">Tu constancia</p>
