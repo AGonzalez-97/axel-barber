@@ -71,7 +71,9 @@ export default function DashboardCharts({
   onDemoChange: (v: boolean) => void
 }) {
   const { resolvedTheme } = useTheme()
-  const isDark = resolvedTheme === 'dark'
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
+  const isDark = mounted && resolvedTheme === 'dark'
 
   const cutsColor = isDark ? '#e4e4e7' : '#18181b'
   const gridColor = isDark ? '#27272a' : '#f0f0f0'

@@ -30,14 +30,14 @@ function Toggle({
       onClick={onChange}
       disabled={disabled}
       className={[
-        'relative h-6 w-11 shrink-0 cursor-pointer overflow-hidden rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400 disabled:opacity-50',
-        checked ? 'bg-amber-400' : 'bg-gray-200 dark:bg-gray-600',
+        'relative h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400 disabled:opacity-50',
+        checked ? 'bg-amber-400' : 'bg-gray-200',
       ].join(' ')}
     >
       <span
         className={[
-          'absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all duration-200',
-          checked ? 'left-[22px]' : 'left-0.5',
+          'absolute top-1 h-4 w-4 rounded-full bg-white shadow transition-all duration-200',
+          checked ? 'left-[26px]' : 'left-1',
         ].join(' ')}
       />
     </button>
