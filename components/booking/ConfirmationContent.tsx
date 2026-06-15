@@ -61,12 +61,12 @@ export function ConfirmationContent() {
 
   async function handleShare() {
     const bookingLink = getBookingLink()
-    const shareText = `Reservé mi turno en Leo Barber para el ${displayDate} a las ${displayTime}. ¿Querés sacar el tuyo? ${bookingLink}`
+    const shareText = `Reservé mi turno en Axel-Barber para el ${displayDate} a las ${displayTime}. ¿Querés sacar el tuyo? ${bookingLink}`
 
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'Mi turno en Leo Barber',
+          title: 'Mi turno en Axel-Barber',
           text: shareText,
         })
         return

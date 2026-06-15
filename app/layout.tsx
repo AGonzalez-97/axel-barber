@@ -2,13 +2,13 @@ import type { Metadata, Viewport } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Leo Barber',
-  description: 'Reservá tu turno en Leo Barber',
+  title: 'Axel-Barber',
+  description: 'Reservá tu turno en Axel-Barber',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'Leo Barber',
+    title: 'Axel-Barber',
   },
   icons: {
     apple: '/apple-touch-icon.png',

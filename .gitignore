@@ -38,3 +38,5 @@ next-env.d.ts
 # serwist — generated service worker (built from app/sw.ts)
 /public/sw.js
 /public/sw.js.map
+
+.vercel

@@ -20,7 +20,7 @@ export default function ShareBookingLink({ tenantSlug: _tenantSlug }: Props) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
   const bookingUrl = `${appUrl}/book`
 
-  const shareText = `¡Sacá tu turno en Leo Barber! 💈 Reservá acá: ${bookingUrl}`
+  const shareText = `¡Sacá tu turno en Axel-Barber! 💈 Reservá acá: ${bookingUrl}`
 
   async function handleShare() {
     if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {

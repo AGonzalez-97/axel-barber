@@ -77,7 +77,15 @@ export async function PATCH(request: NextRequest) {
     booking_mode?: 'request' | 'slots'
     available_days?: number
     settings?: Record<string, unknown>
+    payment_alias?: string
   } = {}
+
+  if ('payment_alias' in patch) {
+    if (typeof patch.payment_alias !== 'string' || patch.payment_alias.trim().length === 0) {
+      return NextResponse.json({ error: 'payment_alias must be a non-empty string' }, { status: 400 })
+    }
+    updates.payment_alias = patch.payment_alias.trim()
+  }
 
   if ('booking_mode' in patch) {
     if (patch.booking_mode !== 'request' && patch.booking_mode !== 'slots') {

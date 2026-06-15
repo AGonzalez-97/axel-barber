@@ -1,7 +1,7 @@
 {
-  "name": "Leo Barber",
-  "short_name": "Leo Barber",
-  "description": "Reservá tu turno en Leo Barber",
+  "name": "Axel-Barber",
+  "short_name": "Axel-Barber",
+  "description": "Reservá tu turno en Axel-Barber",
   "start_url": "/book",
   "display": "standalone",
   "background_color": "#ffffff",
