@@ -350,9 +350,6 @@ export default async function HomePage() {
             </div>
           </div>
 
-          <p className="mt-4 text-center text-xs text-zinc-400">
-            Los feriados nacionales pueden variar. Seguinos para novedades.
-          </p>
         </div>
       </section>
 
@@ -401,8 +398,10 @@ export default async function HomePage() {
           <div className="mb-6 border-t border-zinc-800" />
 
           <div className="space-y-1 text-center text-xs text-zinc-600">
-            <p>Desarrollado por <span className="text-zinc-400">Axel Gonzalez</span>, Tafi Viejo</p>
             <p>© {new Date().getFullYear()} Axel Barber Club · Todos los derechos reservados</p>
+            <p className="pt-1">
+              Desarrollado por <span className="text-zinc-400">Axel Gonzalez</span>, Tafi Viejo
+            </p>
           </div>
         </div>
       </footer>
