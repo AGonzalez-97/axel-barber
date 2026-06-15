@@ -3,17 +3,46 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
 interface Service {
   id: string
   name: string
   price_ars: number
-  duration_minutes: number
   is_active: boolean
 }
 
-// ─── Service row component ─────────────────────────────────────────────────────
+function Toggle({
+  checked,
+  onChange,
+  disabled,
+  label,
+}: {
+  checked: boolean
+  onChange: () => void
+  disabled?: boolean
+  label: string
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      onClick={onChange}
+      disabled={disabled}
+      className={[
+        'relative h-6 w-11 shrink-0 cursor-pointer overflow-hidden rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400 disabled:opacity-50',
+        checked ? 'bg-amber-400' : 'bg-gray-200 dark:bg-gray-600',
+      ].join(' ')}
+    >
+      <span
+        className={[
+          'absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all duration-200',
+          checked ? 'left-[22px]' : 'left-0.5',
+        ].join(' ')}
+      />
+    </button>
+  )
+}
 
 function ServiceRow({
   service,
@@ -28,12 +57,8 @@ function ServiceRow({
 
   async function handlePriceSave() {
     const value = parseFloat(priceInput)
-    if (isNaN(value) || value < 0) {
-      setError('Precio inválido')
-      return
-    }
+    if (isNaN(value) || value < 0) { setError('Precio inválido'); return }
     if (value === service.price_ars) return
-
     setSaving(true)
     setError(null)
     try {
@@ -48,14 +73,11 @@ function ServiceRow({
       } else {
         onUpdate(service.id, { price_ars: value })
       }
-    } catch {
-      setError('Error de conexión')
-    } finally {
-      setSaving(false)
-    }
+    } catch { setError('Error de conexión') }
+    finally { setSaving(false) }
   }
 
-  async function handleToggleActive() {
+  async function handleToggle() {
     setSaving(true)
     setError(null)
     try {
@@ -70,77 +92,49 @@ function ServiceRow({
       } else {
         onUpdate(service.id, { is_active: !service.is_active })
       }
-    } catch {
-      setError('Error de conexión')
-    } finally {
-      setSaving(false)
-    }
+    } catch { setError('Error de conexión') }
+    finally { setSaving(false) }
   }
 
   return (
     <li className="rounded-2xl bg-white px-4 py-4 shadow-sm ring-1 ring-gray-200">
-      <div className="flex items-start gap-3">
-        {/* Active toggle */}
-        <button
-          type="button"
-          role="switch"
-          aria-checked={service.is_active}
-          aria-label={`${service.is_active ? 'Desactivar' : 'Activar'} ${service.name}`}
-          onClick={handleToggleActive}
+      <div className="flex items-center gap-3">
+        <Toggle
+          checked={service.is_active}
+          onChange={handleToggle}
           disabled={saving}
-          className={[
-            'relative mt-0.5 h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900 disabled:opacity-50',
-            service.is_active ? 'bg-gray-900' : 'bg-gray-200',
-          ].join(' ')}
-        >
-          <span
-            className={[
-              'absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform',
-              service.is_active ? 'translate-x-5' : 'translate-x-0.5',
-            ].join(' ')}
-          />
-        </button>
-
-        {/* Name + duration */}
-        <div className="min-w-0 flex-1">
-          <p className={['font-semibold', service.is_active ? 'text-gray-900' : 'text-gray-400'].join(' ')}>
-            {service.name}
-          </p>
-          <p className="text-xs text-gray-400">{service.duration_minutes} min</p>
-        </div>
+          label={`${service.is_active ? 'Desactivar' : 'Activar'} ${service.name}`}
+        />
+        <p className={['flex-1 font-semibold', service.is_active ? 'text-gray-900' : 'text-gray-400'].join(' ')}>
+          {service.name}
+        </p>
       </div>
 
-      {/* Price row */}
       <div className="mt-3 flex items-center gap-2">
         <label htmlFor={`price-${service.id}`} className="text-sm font-medium text-gray-700">
           Precio
         </label>
-        <div className="flex flex-1 items-center gap-2">
-          <span className="text-sm text-gray-500">$</span>
-          <input
-            id={`price-${service.id}`}
-            type="number"
-            inputMode="decimal"
-            min={0}
-            step={1}
-            value={priceInput}
-            onChange={(e) => {
-              setPriceInput(e.target.value)
-              setError(null)
-            }}
-            onBlur={handlePriceSave}
-            disabled={saving}
-            className="w-28 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 outline-none focus:border-gray-400 focus:ring-2 focus:ring-gray-200 disabled:opacity-50"
-          />
-          <button
-            type="button"
-            onClick={handlePriceSave}
-            disabled={saving}
-            className="rounded-xl bg-gray-900 px-3 py-2 text-xs font-semibold text-white transition-opacity hover:opacity-80 disabled:opacity-50"
-          >
-            {saving ? 'Guardando…' : 'Guardar'}
-          </button>
-        </div>
+        <span className="text-sm text-gray-500">$</span>
+        <input
+          id={`price-${service.id}`}
+          type="number"
+          inputMode="decimal"
+          min={0}
+          step={1}
+          value={priceInput}
+          onChange={(e) => { setPriceInput(e.target.value); setError(null) }}
+          onBlur={handlePriceSave}
+          disabled={saving}
+          className="w-28 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 outline-none focus:border-gray-400 focus:ring-2 focus:ring-gray-200 disabled:opacity-50"
+        />
+        <button
+          type="button"
+          onClick={handlePriceSave}
+          disabled={saving}
+          className="rounded-xl bg-gray-900 px-3 py-2 text-xs font-semibold text-white transition-opacity hover:opacity-80 disabled:opacity-50"
+        >
+          {saving ? 'Guardando…' : 'Guardar'}
+        </button>
       </div>
 
       {error && <p className="mt-1.5 text-xs text-red-500">{error}</p>}
@@ -148,41 +142,25 @@ function ServiceRow({
   )
 }
 
-// ─── Add service form ─────────────────────────────────────────────────────────
-
 function AddServiceForm({ onAdded }: { onAdded: (service: Service) => void }) {
   const [name, setName] = useState('')
   const [price, setPrice] = useState('')
-  const [duration, setDuration] = useState('30')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     const priceNum = parseFloat(price)
-    const durationNum = parseInt(duration, 10)
-
-    if (!name.trim()) {
-      setError('El nombre es requerido')
-      return
-    }
-    if (isNaN(priceNum) || priceNum < 0) {
-      setError('Precio inválido')
-      return
-    }
-    if (isNaN(durationNum) || durationNum < 1) {
-      setError('Duración inválida')
-      return
-    }
+    if (!name.trim()) { setError('El nombre es requerido'); return }
+    if (isNaN(priceNum) || priceNum < 0) { setError('Precio inválido'); return }
 
     setSaving(true)
     setError(null)
-
     try {
       const res = await fetch('/api/admin/services', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim(), price_ars: priceNum, duration_minutes: durationNum }),
+        body: JSON.stringify({ name: name.trim(), price_ars: priceNum, duration_minutes: 30 }),
       })
       const json = (await res.json()) as { service?: Service; error?: string }
       if (!res.ok) {
@@ -191,13 +169,9 @@ function AddServiceForm({ onAdded }: { onAdded: (service: Service) => void }) {
         onAdded(json.service)
         setName('')
         setPrice('')
-        setDuration('30')
       }
-    } catch {
-      setError('Error de conexión')
-    } finally {
-      setSaving(false)
-    }
+    } catch { setError('Error de conexión') }
+    finally { setSaving(false) }
   }
 
   return (
@@ -220,39 +194,21 @@ function AddServiceForm({ onAdded }: { onAdded: (service: Service) => void }) {
           />
         </div>
 
-        <div className="flex gap-3">
-          <div className="flex-1">
-            <label htmlFor="new-price" className="mb-1 block text-sm font-medium text-gray-700">
-              Precio ($)
-            </label>
-            <input
-              id="new-price"
-              type="number"
-              inputMode="decimal"
-              min={0}
-              step={1}
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              placeholder="9000"
-              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 outline-none focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
-            />
-          </div>
-
-          <div className="w-28">
-            <label htmlFor="new-duration" className="mb-1 block text-sm font-medium text-gray-700">
-              Duración (min)
-            </label>
-            <input
-              id="new-duration"
-              type="number"
-              inputMode="numeric"
-              min={1}
-              max={480}
-              value={duration}
-              onChange={(e) => setDuration(e.target.value)}
-              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
-            />
-          </div>
+        <div>
+          <label htmlFor="new-price" className="mb-1 block text-sm font-medium text-gray-700">
+            Precio ($)
+          </label>
+          <input
+            id="new-price"
+            type="number"
+            inputMode="decimal"
+            min={0}
+            step={1}
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+            placeholder="9000"
+            className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 outline-none focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
+          />
         </div>
       </div>
 
@@ -269,8 +225,6 @@ function AddServiceForm({ onAdded }: { onAdded: (service: Service) => void }) {
   )
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
-
 export default function ServiciosPage() {
   const router = useRouter()
   const [services, setServices] = useState<Service[]>([])
@@ -281,42 +235,23 @@ export default function ServiciosPage() {
     setLoading(true)
     setFetchError(null)
     try {
-      // Fetch all services (including inactive) for admin management
       const res = await fetch('/api/admin/services')
-      if (res.status === 401) {
-        router.push('/login')
-        return
-      }
+      if (res.status === 401) { router.push('/login'); return }
       const json = (await res.json()) as { services?: Service[]; error?: string }
-      if (!res.ok) {
-        setFetchError(json.error ?? 'Error al cargar')
-      } else {
-        setServices(json.services ?? [])
-      }
-    } catch {
-      setFetchError('Error de conexión')
-    } finally {
-      setLoading(false)
-    }
+      if (!res.ok) { setFetchError(json.error ?? 'Error al cargar') }
+      else { setServices(json.services ?? []) }
+    } catch { setFetchError('Error de conexión') }
+    finally { setLoading(false) }
   }, [router])
 
-  useEffect(() => {
-    void loadServices()
-  }, [loadServices])
+  useEffect(() => { void loadServices() }, [loadServices])
 
   function handleUpdate(id: string, changes: Partial<Pick<Service, 'price_ars' | 'is_active'>>) {
-    setServices((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, ...changes } : s)),
-    )
-  }
-
-  function handleAdded(service: Service) {
-    setServices((prev) => [...prev, service])
+    setServices((prev) => prev.map((s) => (s.id === id ? { ...s, ...changes } : s)))
   }
 
   return (
     <div className="mx-auto max-w-lg px-4 py-6">
-      {/* Header */}
       <div className="mb-5 flex items-center gap-3">
         <button
           type="button"
@@ -331,45 +266,26 @@ export default function ServiciosPage() {
         <h1 className="text-xl font-bold text-gray-900">Servicios</h1>
       </div>
 
-      {loading && (
-        <p className="text-center text-sm text-gray-400">Cargando servicios…</p>
-      )}
-
+      {loading && <p className="text-center text-sm text-gray-400">Cargando servicios…</p>}
       {fetchError && (
-        <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600 ring-1 ring-red-200">
-          {fetchError}
-        </div>
+        <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600 ring-1 ring-red-200">{fetchError}</div>
       )}
 
       {!loading && !fetchError && (
         <div className="space-y-3">
-          {/* Active services first, then inactive */}
-          <section aria-label="Lista de servicios">
+          <ul className="space-y-2">
             {services.length === 0 ? (
-              <p className="py-6 text-center text-sm text-gray-400">
-                No hay servicios. Agregá uno abajo.
-              </p>
+              <p className="py-6 text-center text-sm text-gray-400">No hay servicios. Agregá uno abajo.</p>
             ) : (
-              <ul className="space-y-2" aria-label="Servicios">
-                {[...services]
-                  .sort((a, b) => Number(b.is_active) - Number(a.is_active))
-                  .map((service) => (
-                    <ServiceRow
-                      key={service.id}
-                      service={service}
-                      onUpdate={handleUpdate}
-                    />
-                  ))}
-              </ul>
+              [...services]
+                .sort((a, b) => Number(b.is_active) - Number(a.is_active))
+                .map((s) => <ServiceRow key={s.id} service={s} onUpdate={handleUpdate} />)
             )}
-          </section>
+          </ul>
 
-          <p className="text-xs text-gray-400 px-1">
-            * Los precios anteriores no se modifican. Solo afectan turnos futuros.
-          </p>
+          <p className="px-1 text-xs text-gray-400">* Los precios anteriores no se modifican. Solo afectan turnos futuros.</p>
 
-          {/* Add service form */}
-          <AddServiceForm onAdded={handleAdded} />
+          <AddServiceForm onAdded={(s) => setServices((prev) => [...prev, s])} />
         </div>
       )}
     </div>
