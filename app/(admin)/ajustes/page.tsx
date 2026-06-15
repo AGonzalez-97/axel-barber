@@ -5,6 +5,8 @@ import { createServiceClient } from '@/lib/supabase/service'
 import { TENANT_ID } from '@/lib/tenant'
 import BookingModeToggle from '@/components/admin/BookingModeToggle'
 import EditAliasForm from '@/components/admin/EditAliasForm'
+import ThemeToggle from '@/components/admin/ThemeToggle'
+import InstallAppSection from '@/components/admin/InstallAppSection'
 
 export const dynamic = 'force-dynamic'
 
@@ -60,6 +62,16 @@ export default async function AjustesPage() {
       </div>
 
       <div className="space-y-5">
+        {/* ── Theme toggle ─────────────────────────────────────────────── */}
+        <section className="rounded-2xl bg-white dark:bg-gray-800 px-4 py-4 shadow-sm ring-1 ring-gray-200 dark:ring-gray-700">
+          <ThemeToggle />
+        </section>
+
+        {/* ── Install app ──────────────────────────────────────────────── */}
+        <section className="rounded-2xl bg-white px-4 py-4 shadow-sm ring-1 ring-gray-200">
+          <InstallAppSection />
+        </section>
+
         {/* ── Booking mode toggle ──────────────────────────────────────── */}
         <section className="rounded-2xl bg-white px-4 py-4 shadow-sm ring-1 ring-gray-200">
           <h2 className="mb-1 text-sm font-semibold text-gray-700">Modo de reserva</h2>
