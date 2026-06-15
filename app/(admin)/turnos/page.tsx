@@ -196,6 +196,18 @@ async function fetchBookings(date: string): Promise<BookingRow[]> {
   return data ?? []
 }
 
+async function fetchActiveBookings(): Promise<BookingRow[]> {
+  const service = createServiceClient()
+  const { data } = await service
+    .from('bookings')
+    .select('id, starts_at, created_at, status, clients ( name, phone ), services ( name )')
+    .eq('tenant_id', TENANT_ID)
+    .in('status', ['pending', 'confirmed'])
+    .order('starts_at', { ascending: true })
+    .returns<BookingRow[]>()
+  return data ?? []
+}
+
 async function fetchCompletedBookings(): Promise<CompletedRow[]> {
   const service = createServiceClient()
   const { data } = await service
@@ -238,10 +250,11 @@ export default async function TurnosPage({
       ? searchParams.date
       : today
 
-  const [bookings, pendingBookings, completedBookings] = await Promise.all([
+  const [bookings, pendingBookings, completedBookings, activeBookings] = await Promise.all([
     fetchBookings(targetDate),
     fetchPendingBookings(),
     fetchCompletedBookings(),
+    fetchActiveBookings(),
   ])
   const conflictingIds = getConflictingIds(bookings)
 
@@ -250,8 +263,53 @@ export default async function TurnosPage({
   const isToday = targetDate === today
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6">
-    <div className="flex gap-6 items-start">
+    <div className="mx-auto max-w-6xl px-4 py-6">
+    <div className="flex gap-5 items-start">
+
+    {/* ── Left: pending + confirmed ─────────────────────────────────────── */}
+    <aside className="hidden w-64 shrink-0 lg:block">
+      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500">
+        Por confirmar / Confirmados ({activeBookings.length})
+      </h2>
+      {activeBookings.length === 0 ? (
+        <div className="rounded-2xl bg-white px-4 py-8 text-center text-sm text-gray-400 shadow-sm ring-1 ring-gray-200">
+          Sin turnos pendientes
+        </div>
+      ) : (
+        <ul className="space-y-2">
+          {activeBookings.map((b) => {
+            const isPending = b.status === 'pending'
+            return (
+              <li key={b.id}>
+                <Link
+                  href={`/turnos/${b.id}`}
+                  className={[
+                    'flex items-center gap-2 rounded-xl px-3 py-2.5 shadow-sm ring-1 transition-shadow hover:shadow-md',
+                    isPending ? 'bg-orange-50 ring-orange-200' : 'bg-blue-50 ring-blue-200',
+                  ].join(' ')}
+                >
+                  <span className={[
+                    'min-w-[40px] rounded-lg px-1.5 py-1 text-center text-xs font-bold tabular-nums',
+                    isPending ? 'bg-orange-500 text-white' : 'bg-blue-600 text-white',
+                  ].join(' ')}>
+                    {formatTime(b.starts_at)}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-gray-900">
+                      {b.clients?.name ?? '—'}
+                    </p>
+                    <p className="truncate text-xs text-gray-400">
+                      {formatCompletedDate(b.starts_at)} · {isPending ? 'Pendiente' : 'Confirmado'}
+                    </p>
+                  </div>
+                </Link>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </aside>
+
     <div className="min-w-0 flex-1">
 
       {/* ── Pending section ─────────────────────────────────────────────── */}
