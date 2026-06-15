@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { TENANT_ID } from '@/lib/tenant'
 import StatsCard from '@/components/admin/StatsCard'
+import DashboardCharts from '@/components/admin/DashboardCharts'
 
 export const revalidate = 60
 
@@ -166,7 +167,7 @@ export default async function DashboardPage() {
   const monthlyRevenue = monthly?.total_revenue ?? 0
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-6">
+    <div className="mx-auto max-w-4xl px-4 py-6">
       <h1 className="mb-6 text-xl font-bold text-gray-900">Dashboard</h1>
 
       {/* ── Today — featured, largest, always visible above the fold ── */}
@@ -255,46 +256,15 @@ export default async function DashboardPage() {
         </div>
       </section>
 
-      {/* ── Low-traffic slots (TASK-025) ── */}
-      <section aria-labelledby="low-traffic-heading">
-        <details className="rounded-2xl bg-white shadow-sm ring-1 ring-gray-200">
-          <summary
-            id="low-traffic-heading"
-            className="cursor-pointer select-none rounded-2xl px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-          >
-            Horarios con menos movimiento
-          </summary>
-
-          <div className="px-4 pb-4 pt-2">
-            {lowTraffic.length === 0 ? (
-              <p className="text-sm text-gray-500">
-                Todavía no hay suficiente historial para detectar patrones.
-              </p>
-            ) : (
-              <ul className="divide-y divide-gray-100">
-                {lowTraffic.map((slot) => (
-                  <li
-                    key={`${slot.day_of_week}-${slot.hour_of_day}`}
-                    className="flex items-center justify-between py-2"
-                  >
-                    <div>
-                      <span className="text-sm font-medium text-gray-800">
-                        {DAY_NAMES[slot.day_of_week] ?? `Día ${slot.day_of_week}`}
-                      </span>
-                      <span className="ml-2 text-sm text-gray-500">
-                        {formatHourRange(slot.hour_of_day)}
-                      </span>
-                    </div>
-                    <span className="text-xs text-gray-400">
-                      {Math.round(slot.avg_bookings)} turno
-                      {Math.round(slot.avg_bookings) !== 1 ? 's' : ''}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </details>
+      {/* ── Charts ── */}
+      <section aria-labelledby="charts-heading" className="mb-6">
+        <h2
+          id="charts-heading"
+          className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500"
+        >
+          Evolución del negocio
+        </h2>
+        <DashboardCharts />
       </section>
     </div>
   )
