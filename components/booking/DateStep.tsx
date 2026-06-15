@@ -8,19 +8,17 @@ type TenantConfig = {
   available_days: number
 }
 
-const REQUEST_TIME_OPTIONS: string[] = []
-for (let h = 9; h <= 19; h++) {
-  REQUEST_TIME_OPTIONS.push(`${String(h).padStart(2, '0')}:00`)
+type SlotStatus = {
+  time: string
+  available: boolean
 }
 
 /**
  * Returns true if the given Date falls on an enabled day per the bitmask.
- * Bitmask: bit 1 = Monday, bit 2 = Tuesday, ..., bit 6 = Saturday, bit 7 = Sunday
- * JavaScript getDay(): 0=Sunday, 1=Monday, ..., 6=Saturday
+ * Bitmask: bit 1 = Monday, ..., bit 6 = Saturday, bit 7 = Sunday
  */
 function isDayEnabled(date: Date, bitmask: number): boolean {
-  const jsDay = date.getDay() // 0=Sun, 1=Mon, ..., 6=Sat
-  // Map JS day to bitmask bit position (bit 1 = Mon = jsDay 1, ..., bit 6 = Sat = jsDay 6, bit 7 = Sun = jsDay 0)
+  const jsDay = date.getDay()
   const bitPos = jsDay === 0 ? 7 : jsDay
   return (bitmask & (1 << (bitPos - 1))) !== 0
 }
@@ -37,12 +35,14 @@ type DateStepProps = {
 }
 
 /**
- * Step 2: Date + time/slot picker.
+ * Step 2: Date picker → visual availability grid → time selection.
  *
- * Mode A (request): Shows a date picker + approximate time select.
- * Mode B (slots): Shows a date picker → fetches available slots → shows slot buttons.
+ * After the client picks a date, a full slot grid is shown for the day.
+ * Available slots are clickable; taken slots are grayed out so the client
+ * knows at a glance what's still free before choosing.
  *
- * On selection → navigates to /book?step=client&service=<id>&date=<date>&time=<HH:MM>
+ * In "request" mode: selecting a slot submits a booking request (Leo confirms).
+ * In "slots" mode: only available slots are shown as selectable.
  */
 export function DateStep({ serviceId }: DateStepProps) {
   const router = useRouter()
@@ -52,7 +52,7 @@ export function DateStep({ serviceId }: DateStepProps) {
   const [selectedDate, setSelectedDate] = useState<string>('')
   const [selectedTime, setSelectedTime] = useState<string>('')
 
-  const [slots, setSlots] = useState<string[]>([])
+  const [slots, setSlots] = useState<SlotStatus[]>([])
   const [slotsLoading, setSlotsLoading] = useState(false)
   const [slotsError, setSlotsError] = useState<string | null>(null)
 
@@ -67,23 +67,23 @@ export function DateStep({ serviceId }: DateStepProps) {
       .catch(() => setConfigError('No se pudo cargar la configuración. Intentá de nuevo.'))
   }, [])
 
-  // Fetch slots when date changes (Mode B only)
+  // Fetch availability when date changes
   useEffect(() => {
-    if (!selectedDate || tenantConfig?.booking_mode !== 'slots') return
+    if (!selectedDate) return
     setSlotsLoading(true)
     setSlotsError(null)
     setSlots([])
     setSelectedTime('')
 
-    fetch(`/api/slots?date=${selectedDate}`)
+    fetch(`/api/availability?date=${selectedDate}`)
       .then((r) => r.json())
-      .then((data: { slots?: string[]; error?: string }) => {
+      .then((data: { slots?: SlotStatus[]; error?: string }) => {
         if (data.error) throw new Error(data.error)
         setSlots(data.slots ?? [])
       })
-      .catch(() => setSlotsError('No se pudieron cargar los turnos. Intentá de nuevo.'))
+      .catch(() => setSlotsError('No se pudo cargar la disponibilidad. Intentá de nuevo.'))
       .finally(() => setSlotsLoading(false))
-  }, [selectedDate, tenantConfig?.booking_mode])
+  }, [selectedDate])
 
   function handleContinue() {
     if (!selectedDate || !selectedTime) return
@@ -92,10 +92,8 @@ export function DateStep({ serviceId }: DateStepProps) {
     )
   }
 
-  // Compute min/max date for the native date input
   const today = new Date()
   const minDate = toLocalDateString(today)
-  // Allow up to 60 days ahead
   const maxDateObj = new Date(today)
   maxDateObj.setDate(maxDateObj.getDate() + 60)
   const maxDate = toLocalDateString(maxDateObj)
@@ -106,6 +104,8 @@ export function DateStep({ serviceId }: DateStepProps) {
     const dt = new Date(y, m - 1, d)
     return !isDayEnabled(dt, tenantConfig.available_days)
   }
+
+  const availableCount = slots.filter((s) => s.available).length
 
   if (configError) {
     return (
@@ -142,8 +142,8 @@ export function DateStep({ serviceId }: DateStepProps) {
         <h1 className="text-2xl font-bold text-gray-900">Elegí fecha y hora</h1>
         <p className="mt-1 text-gray-500">
           {tenantConfig.booking_mode === 'slots'
-            ? 'Seleccioná el turno disponible que más te convenga'
-            : 'Elegí el día y el horario aproximado'}
+            ? 'Solo los turnos disponibles son seleccionables'
+            : 'Leo va a confirmar tu turno en breve'}
         </p>
       </header>
 
@@ -164,78 +164,114 @@ export function DateStep({ serviceId }: DateStepProps) {
             setSelectedDate(val)
           }}
           className="h-12 w-full rounded-xl border border-gray-200 bg-white px-4 text-gray-900 shadow-sm focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900"
-          aria-describedby="date-hint"
         />
-        <p id="date-hint" className="mt-1 text-xs text-gray-400">
-          Días disponibles: lunes a sábado
-        </p>
+        <p className="mt-1 text-xs text-gray-400">Días disponibles: lunes a sábado</p>
       </section>
 
-      {/* Mode A: approximate time select */}
-      {tenantConfig.booking_mode === 'request' && selectedDate && (
+      {/* Availability grid */}
+      {selectedDate && (
         <section className="mb-8">
-          <label htmlFor="booking-time" className="mb-2 block text-sm font-medium text-gray-700">
-            Horario aproximado
-          </label>
-          <select
-            id="booking-time"
-            value={selectedTime}
-            onChange={(e) => setSelectedTime(e.target.value)}
-            className="h-12 w-full rounded-xl border border-gray-200 bg-white px-4 text-gray-900 shadow-sm focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900"
-          >
-            <option value="">Elegí un horario</option>
-            {REQUEST_TIME_OPTIONS.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-          <p className="mt-1 text-xs text-gray-400">
-            Leo va a confirmar tu turno en breve.
-          </p>
-        </section>
-      )}
-
-      {/* Mode B: slot buttons */}
-      {tenantConfig.booking_mode === 'slots' && selectedDate && (
-        <section className="mb-8">
-          <p className="mb-3 text-sm font-medium text-gray-700">Turnos disponibles</p>
-
           {slotsLoading && (
-            <div className="grid grid-cols-3 gap-2" role="status" aria-label="Cargando turnos">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div key={i} className="h-12 animate-pulse rounded-xl bg-gray-200" />
+            <div className="grid grid-cols-4 gap-2" role="status" aria-label="Cargando disponibilidad">
+              {Array.from({ length: 12 }).map((_, i) => (
+                <div key={i} className="h-14 animate-pulse rounded-xl bg-gray-200" />
               ))}
             </div>
           )}
 
           {slotsError && (
-            <p className="rounded-xl bg-red-50 p-3 text-center text-sm text-red-600">{slotsError}</p>
-          )}
-
-          {!slotsLoading && !slotsError && slots.length === 0 && (
-            <p className="rounded-xl bg-yellow-50 p-4 text-center text-sm text-yellow-700">
-              No hay turnos disponibles para esta fecha. Probá con otro día.
+            <p className="rounded-xl bg-red-50 p-3 text-center text-sm text-red-600">
+              {slotsError}
             </p>
           )}
 
           {!slotsLoading && !slotsError && slots.length > 0 && (
-            <div className="grid grid-cols-3 gap-2" role="group" aria-label="Turnos disponibles">
-              {slots.map((slot) => (
-                <button
-                  key={slot}
-                  onClick={() => setSelectedTime(slot)}
-                  aria-pressed={selectedTime === slot}
-                  className={`h-12 rounded-xl border text-sm font-medium transition-colors ${
-                    selectedTime === slot
-                      ? 'border-gray-900 bg-gray-900 text-white'
-                      : 'border-gray-200 bg-white text-gray-900 hover:border-gray-400'
-                  }`}
-                >
-                  {slot}
-                </button>
-              ))}
-            </div>
+            <>
+              {/* Summary */}
+              <div className="mb-3 flex items-center justify-between">
+                <p className="text-sm font-medium text-gray-700">Horarios</p>
+                <p className="text-xs text-gray-400">
+                  {availableCount === 0
+                    ? 'Sin turnos disponibles'
+                    : `${availableCount} disponible${availableCount !== 1 ? 's' : ''}`}
+                </p>
+              </div>
+
+              {/* Legend */}
+              <div className="mb-3 flex items-center gap-4 text-xs text-gray-500">
+                <span className="flex items-center gap-1">
+                  <span className="inline-block h-3 w-3 rounded-full bg-gray-900" />
+                  Disponible
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="inline-block h-3 w-3 rounded-full bg-gray-200" />
+                  Ocupado
+                </span>
+                {selectedTime && (
+                  <span className="flex items-center gap-1">
+                    <span className="inline-block h-3 w-3 rounded-full bg-blue-600" />
+                    Tu elección
+                  </span>
+                )}
+              </div>
+
+              {/* Slot grid */}
+              <div
+                className="grid grid-cols-4 gap-2"
+                role="group"
+                aria-label="Disponibilidad de turnos"
+              >
+                {slots.map((slot) => {
+                  const isSelected = selectedTime === slot.time
+                  const isAvailable = slot.available
+
+                  // In slots mode: taken slots are completely blocked.
+                  // In request mode: taken slots are shown but still selectable (Leo confirms).
+                  const isDisabled =
+                    tenantConfig.booking_mode === 'slots' && !isAvailable
+
+                  return (
+                    <button
+                      key={slot.time}
+                      onClick={() => !isDisabled && setSelectedTime(slot.time)}
+                      disabled={isDisabled}
+                      aria-pressed={isSelected}
+                      aria-label={`${slot.time} — ${isAvailable ? 'disponible' : 'ocupado'}`}
+                      className={[
+                        'flex h-14 flex-col items-center justify-center rounded-xl border text-sm font-medium transition-colors',
+                        isSelected
+                          ? 'border-blue-600 bg-blue-600 text-white'
+                          : isDisabled
+                          ? 'cursor-not-allowed border-gray-100 bg-gray-50 text-gray-300'
+                          : isAvailable
+                          ? 'border-gray-200 bg-white text-gray-900 hover:border-gray-900 hover:bg-gray-50 active:bg-gray-100'
+                          : 'border-gray-100 bg-gray-50 text-gray-400 hover:border-gray-300',
+                      ].join(' ')}
+                    >
+                      <span>{slot.time}</span>
+                      {!isAvailable && (
+                        <span className="mt-0.5 text-[10px] font-normal leading-none">
+                          Ocupado
+                        </span>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+
+              {/* Request mode note when user picks a taken slot */}
+              {tenantConfig.booking_mode === 'request' && selectedTime && !slots.find(s => s.time === selectedTime)?.available && (
+                <p className="mt-3 rounded-xl bg-yellow-50 px-3 py-2 text-xs text-yellow-700">
+                  Ese horario ya tiene un turno, pero podés pedirlo igual. Leo va a confirmar si hay lugar.
+                </p>
+              )}
+
+              {availableCount === 0 && tenantConfig.booking_mode === 'slots' && (
+                <p className="mt-3 rounded-xl bg-yellow-50 p-4 text-center text-sm text-yellow-700">
+                  No hay turnos disponibles para este día. Probá con otra fecha.
+                </p>
+              )}
+            </>
           )}
         </section>
       )}
