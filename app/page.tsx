@@ -147,6 +147,7 @@ export default async function HomePage() {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-5 w-5 animate-bounce">
             <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
           </svg>
+          <span className="text-[10px] font-semibold uppercase tracking-widest">Scroll</span>
         </div>
       </section>
 
