@@ -236,8 +236,13 @@ export default async function HomePage() {
           <p className="mb-2 text-center text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
             Fidelización
           </p>
-          <h2 className="mb-2 text-center text-4xl font-black text-white">Programa de Puntos</h2>
-          <p className="mb-12 text-center text-sm text-zinc-400">Cada corte te acerca a un premio</p>
+          <h2 className="mb-2 text-center text-4xl font-black text-white">Programa de Clientes Frecuentes</h2>
+          <p className="mb-3 text-center text-sm text-zinc-400">Tu constancia</p>
+          <div className="mb-10 flex justify-center">
+            <span className="rounded-full bg-amber-400/15 px-5 py-1.5 text-sm font-bold text-amber-400 ring-1 ring-amber-400/30">
+              ¡Tiene recompensa!
+            </span>
+          </div>
 
           <div className="mb-10 flex justify-center gap-2">
             {Array.from({ length: freeAt }, (_, i) => i + 1).map((n) => {
