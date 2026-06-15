@@ -96,11 +96,11 @@ export default function InstallAppSection() {
           </li>
           <li className="flex items-start gap-2">
             <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gray-900 text-[10px] font-bold text-white">2</span>
-            Scrolleá y tocá <strong className="ml-1">"Agregar a pantalla de inicio"</strong>
+            Scrolleá y tocá <strong className="ml-1">&ldquo;Agregar a pantalla de inicio&rdquo;</strong>
           </li>
           <li className="flex items-start gap-2">
             <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gray-900 text-[10px] font-bold text-white">3</span>
-            Tocá <strong className="ml-1">"Agregar"</strong> arriba a la derecha
+            Tocá <strong className="ml-1">&ldquo;Agregar&rdquo;</strong> arriba a la derecha
           </li>
         </ol>
       )}
@@ -113,7 +113,7 @@ export default function InstallAppSection() {
           </li>
           <li className="flex items-start gap-2">
             <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gray-900 text-[10px] font-bold text-white">2</span>
-            Tocá <strong className="ml-1">"Agregar a pantalla de inicio"</strong>
+            Tocá <strong className="ml-1">&ldquo;Agregar a pantalla de inicio&rdquo;</strong>
           </li>
         </ol>
       )}
