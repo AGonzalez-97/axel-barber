@@ -50,7 +50,7 @@ export default async function HomePage() {
   const discountPct = loyalty?.discount_pct ?? 15
 
   return (
-    <div>
+    <div className="bg-zinc-950">
       {/* ── Sticky nav ─────────────────────────────────────────────────────── */}
       <header className="sticky top-0 z-50 border-b border-white/5 bg-zinc-950/95 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-5xl items-center justify-between gap-4 px-4">
@@ -142,26 +142,25 @@ export default async function HomePage() {
         </div>
       </section>
 
+      <div className="mx-auto max-w-5xl border-t border-white/5" />
       {/* ── Services ───────────────────────────────────────────────────────── */}
-      <section id="servicios" className="bg-white px-6 py-20">
+      <section id="servicios" className="px-6 py-20">
         <div className="mx-auto max-w-lg">
-          <p className="mb-2 text-center text-xs font-semibold uppercase tracking-[0.2em] text-zinc-400">
+          <p className="mb-2 text-center text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
             Servicios & Precios
           </p>
-          <h2 className="mb-2 text-center text-4xl font-black text-zinc-900">Nuestros Servicios</h2>
+          <h2 className="mb-2 text-center text-4xl font-black text-white">Nuestros Servicios</h2>
           <p className="mb-12 text-center text-sm text-zinc-400">Calidad garantizada en cada corte</p>
 
-          <div className="overflow-hidden rounded-2xl border border-zinc-200 shadow-sm">
+          <div className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900">
             {services.length > 0 ? (
               services.map((svc, i) => (
                 <div
                   key={svc.id}
-                  className={['flex items-center justify-between gap-4 px-6 py-5', i > 0 ? 'border-t border-zinc-100' : ''].join(' ')}
+                  className={['flex items-center justify-between gap-4 px-6 py-5', i > 0 ? 'border-t border-zinc-800' : ''].join(' ')}
                 >
-                  <div>
-                    <p className="font-bold text-zinc-900">{svc.name}</p>
-                  </div>
-                  <span className="shrink-0 rounded-xl bg-zinc-900 px-4 py-2 text-base font-black text-white">
+                  <p className="font-bold text-white">{svc.name}</p>
+                  <span className="shrink-0 rounded-xl bg-amber-400/10 px-4 py-2 text-base font-black text-amber-400">
                     {formatARS(svc.price_ars)}
                   </span>
                 </div>
@@ -172,15 +171,16 @@ export default async function HomePage() {
           </div>
 
           <div className="mt-8 text-center">
-            <Link href="/book" className="inline-flex h-12 items-center gap-2 rounded-xl bg-zinc-900 px-6 text-sm font-bold text-white transition-opacity hover:opacity-80">
+            <Link href="/book" className="inline-flex h-12 items-center gap-2 rounded-xl bg-amber-400 px-6 text-sm font-bold text-zinc-900 transition-all hover:bg-amber-300 active:scale-95">
               Reservar ahora
             </Link>
           </div>
         </div>
       </section>
 
+      <div className="mx-auto max-w-5xl border-t border-white/5" />
       {/* ── Gallery ────────────────────────────────────────────────────────── */}
-      <section id="galeria" className="bg-zinc-900 px-6 py-20">
+      <section id="galeria" className="px-6 py-20">
         <div className="mx-auto max-w-lg">
           <p className="mb-2 text-center text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
             Galería
@@ -221,6 +221,7 @@ export default async function HomePage() {
         </div>
       </section>
 
+      <div className="mx-auto max-w-5xl border-t border-white/5" />
       {/* ── Fidelización ───────────────────────────────────────────────────── */}
       <section id="fidelizacion" className="bg-zinc-950 px-6 py-20">
         <div className="mx-auto max-w-lg">
@@ -288,16 +289,17 @@ export default async function HomePage() {
         </div>
       </section>
 
+      <div className="mx-auto max-w-5xl border-t border-white/5" />
       {/* ── Location ───────────────────────────────────────────────────────── */}
-      <section id="ubicacion" className="bg-zinc-50 px-6 py-20">
+      <section id="ubicacion" className="px-6 py-20">
         <div className="mx-auto max-w-lg">
-          <p className="mb-2 text-center text-xs font-semibold uppercase tracking-[0.2em] text-zinc-400">
+          <p className="mb-2 text-center text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
             Ubicación
           </p>
-          <h2 className="mb-12 text-center text-4xl font-black text-zinc-900">Dónde nos encontramos</h2>
+          <h2 className="mb-12 text-center text-4xl font-black text-white">Dónde nos encontramos</h2>
 
           {/* Map */}
-          <div className="mb-4 overflow-hidden rounded-2xl shadow-sm ring-1 ring-zinc-200">
+          <div className="mb-4 overflow-hidden rounded-2xl ring-1 ring-white/10">
             <iframe
               src="https://maps.google.com/maps?q=9+de+Julio+450,+Tafi+Viejo,+Tucuman,+Argentina&output=embed&z=16"
               width="100%"
@@ -311,32 +313,32 @@ export default async function HomePage() {
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-zinc-200">
-              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-100">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 text-zinc-700" aria-hidden="true">
+            <div className="rounded-2xl bg-zinc-900 p-6 ring-1 ring-white/5">
+              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-800">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 text-amber-400" aria-hidden="true">
                   <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
                 </svg>
               </div>
-              <h3 className="mb-2 font-bold text-zinc-900">Dirección</h3>
-              <p className="text-sm font-medium text-zinc-700">9 de Julio 450</p>
+              <h3 className="mb-2 font-bold text-white">Dirección</h3>
+              <p className="text-sm font-medium text-zinc-300">9 de Julio 450</p>
               <p className="text-sm text-zinc-500">Tafi Viejo, Tucumán</p>
             </div>
 
-            <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-zinc-200">
-              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-100">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 text-zinc-700" aria-hidden="true">
+            <div className="rounded-2xl bg-zinc-900 p-6 ring-1 ring-white/5">
+              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-800">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 text-amber-400" aria-hidden="true">
                   <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
                 </svg>
               </div>
-              <h3 className="mb-3 font-bold text-zinc-900">Horario</h3>
+              <h3 className="mb-3 font-bold text-white">Horario</h3>
               <div className="space-y-2 text-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-zinc-600">Lunes – Sábado</span>
-                  <span className="font-semibold text-zinc-900">09:00 – 21:00</span>
+                  <span className="text-zinc-400">Lunes – Sábado</span>
+                  <span className="font-semibold text-white">09:00 – 21:00</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-zinc-400">Domingo</span>
-                  <span className="text-zinc-400">Cerrado</span>
+                  <span className="text-zinc-600">Domingo</span>
+                  <span className="text-zinc-600">Cerrado</span>
                 </div>
               </div>
             </div>
