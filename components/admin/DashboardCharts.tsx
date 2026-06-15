@@ -127,22 +127,23 @@ export default function DashboardCharts({
 
       {/* ── Chart card ── */}
       <div className="rounded-2xl bg-white shadow-sm ring-1 ring-gray-200">
-        <div className="flex items-center justify-between gap-3 border-b border-gray-100 px-4 py-3">
-          <div className="flex gap-1">
-            {(['cuts', 'revenue', 'combined'] as Tab[]).map((t) => (
-              <button
-                key={t}
-                onClick={() => setTab(t)}
-                className={[
-                  'rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors',
-                  tab === t ? 'bg-gray-900 text-white' : 'text-gray-500 hover:bg-gray-100',
-                ].join(' ')}
-              >
-                {t === 'cuts' ? 'Cortes' : t === 'revenue' ? 'Ingresos' : 'Combinado'}
-              </button>
-            ))}
-          </div>
-          <div className="flex items-center gap-2">
+        <div className="border-b border-gray-100 px-4 py-3 space-y-2">
+          {/* Row 1: tabs + demo toggle */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex gap-1">
+              {(['cuts', 'revenue', 'combined'] as Tab[]).map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setTab(t)}
+                  className={[
+                    'rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors',
+                    tab === t ? 'bg-gray-900 text-white' : 'text-gray-500 hover:bg-gray-100',
+                  ].join(' ')}
+                >
+                  {t === 'cuts' ? 'Cortes' : t === 'revenue' ? 'Ingresos' : 'Comb.'}
+                </button>
+              ))}
+            </div>
             <button
               onClick={() => onDemoChange(!demo)}
               className={[
@@ -150,15 +151,17 @@ export default function DashboardCharts({
                 demo ? 'bg-violet-100 text-violet-700' : 'text-gray-400 hover:bg-gray-100',
               ].join(' ')}
             >
-              {demo ? 'Vista demo' : 'Demo'}
+              {demo ? 'Demo' : 'Demo'}
             </button>
-            <div className="h-4 w-px bg-gray-200" />
+          </div>
+          {/* Row 2: period selector */}
+          <div className="flex gap-1">
             {PERIODS.map((p) => (
               <button
                 key={p.days}
                 onClick={() => setDays(p.days)}
                 className={[
-                  'rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors',
+                  'flex-1 rounded-lg py-1.5 text-xs font-semibold transition-colors',
                   days === p.days ? 'bg-amber-400 text-zinc-900' : 'text-gray-500 hover:bg-gray-100',
                 ].join(' ')}
               >
